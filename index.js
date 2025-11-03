@@ -1,26 +1,40 @@
+function isPageOrphaned(page, references, blocks) {
+  if (page['journal?'] || page.name.startsWith('logseq/')) {
+    return false;
+  }
+
+  const hasNoReferences = !references || references.length === 0;
+  const hasNoContent = !blocks || blocks.length === 0 ||
+                      (blocks.length === 1 && (!blocks[0].content || blocks[0].content.trim() === ''));
+
+  return hasNoReferences && hasNoContent;
+}
+
+async function findOrphanedPages(api) {
+  const allPages = await api.Editor.getAllPages();
+  const orphanedPages = [];
+
+  for (const page of allPages) {
+    if (page['journal?'] || page.name.startsWith('logseq/')) {
+      continue;
+    }
+
+    const references = await api.Editor.getPageLinkedReferences(page.name);
+    const blocks = await api.Editor.getPageBlocksTree(page.name);
+
+    if (isPageOrphaned(page, references, blocks)) {
+      orphanedPages.push(page.name);
+    }
+  }
+
+  return orphanedPages;
+}
+
 async function removeOrphanedPages() {
   try {
     logseq.UI.showMsg('Scanning for orphaned pages...', 'info');
 
-    const allPages = await logseq.Editor.getAllPages();
-    const orphanedPages = [];
-
-    for (const page of allPages) {
-      if (page['journal?'] || page.name.startsWith('logseq/')) {
-        continue;
-      }
-
-      const references = await logseq.Editor.getPageLinkedReferences(page.name);
-      const blocks = await logseq.Editor.getPageBlocksTree(page.name);
-
-      const hasNoReferences = !references || references.length === 0;
-      const hasNoContent = !blocks || blocks.length === 0 ||
-                          (blocks.length === 1 && (!blocks[0].content || blocks[0].content.trim() === ''));
-
-      if (hasNoReferences && hasNoContent) {
-        orphanedPages.push(page.name);
-      }
-    }
+    const orphanedPages = await findOrphanedPages(logseq);
 
     if (orphanedPages.length === 0) {
       logseq.UI.showMsg('No orphaned pages found!', 'success');
@@ -80,4 +94,10 @@ function main() {
   });
 }
 
-logseq.ready(main).catch(console.error);
+if (typeof logseq !== 'undefined') {
+  logseq.ready(main).catch(console.error);
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { isPageOrphaned, findOrphanedPages };
+}

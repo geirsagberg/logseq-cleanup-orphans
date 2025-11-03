@@ -14,5 +14,13 @@
     "plugin",
     "cleanup",
     "orphaned-pages"
-  ]
+  ],
+  "scripts": {
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest --coverage"
+  },
+  "devDependencies": {
+    "vitest": "^2.1.8"
+  }
 }

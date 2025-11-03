@@ -58,6 +58,37 @@ Click the trash icon in the Logseq toolbar to trigger the cleanup process.
 4. You'll see a confirmation dialog showing how many orphaned pages were found
 5. Upon confirmation, all orphaned pages are deleted
 
+## Development
+
+### Running Tests
+
+The plugin includes comprehensive unit tests using Vitest.
+
+```bash
+# Install dependencies
+bun install
+
+# Run tests
+bun test
+
+# Run tests in watch mode
+bun test --watch
+
+# Run tests with UI
+bun test:ui
+
+# Run tests with coverage
+bun test:coverage
+```
+
+### Test Coverage
+
+Tests cover:
+- Orphan detection logic with various page states
+- Handling of special pages (journal pages, system pages)
+- Edge cases (null/undefined references and blocks)
+- API mocking for isolated unit tests
+
 ## License
 
 MIT
