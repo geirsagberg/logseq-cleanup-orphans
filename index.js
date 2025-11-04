@@ -1,13 +1,20 @@
-function isPageOrphaned(page, references, blocks) {
+function isPageEmpty(page, blocks) {
   if (page['journal?'] || page.name.startsWith('logseq/')) {
     return false;
   }
 
-  const hasNoReferences = !references || references.length === 0;
-  const hasNoContent = !blocks || blocks.length === 0 ||
-                      (blocks.length === 1 && (!blocks[0].content || blocks[0].content.trim() === ''));
+  if (!blocks || blocks.length === 0) {
+    return true;
+  }
 
-  return hasNoReferences && hasNoContent;
+  if (blocks.length === 1) {
+    const content = blocks[0].content;
+    if (!content || content.trim() === '' || content.trim() === '-' || content.trim() === '*') {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 async function findOrphanedPages(api) {
@@ -19,10 +26,9 @@ async function findOrphanedPages(api) {
       continue;
     }
 
-    const references = await api.Editor.getPageLinkedReferences(page.name);
     const blocks = await api.Editor.getPageBlocksTree(page.name);
 
-    if (isPageOrphaned(page, references, blocks)) {
+    if (isPageEmpty(page, blocks)) {
       orphanedPages.push(page.name);
     }
   }
@@ -99,5 +105,5 @@ if (typeof logseq !== 'undefined') {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { isPageOrphaned, findOrphanedPages };
+  module.exports = { isPageEmpty, findOrphanedPages };
 }

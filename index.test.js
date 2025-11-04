@@ -1,131 +1,97 @@
 import { describe, it, expect, vi } from 'vitest';
-import { isPageOrphaned, findOrphanedPages } from './index.js';
+import { isPageEmpty, findOrphanedPages } from './index.js';
 
-describe('isPageOrphaned', () => {
-  it('should return true for page with no references and no content', () => {
+describe('isPageEmpty', () => {
+  it('should return true for page with no blocks', () => {
     const page = { name: 'test-page', 'journal?': false };
-    const references = [];
     const blocks = [];
 
-    expect(isPageOrphaned(page, references, blocks)).toBe(true);
+    expect(isPageEmpty(page, blocks)).toBe(true);
   });
 
-  it('should return true for page with no references and empty block', () => {
+  it('should return true for page with empty block', () => {
     const page = { name: 'test-page', 'journal?': false };
-    const references = [];
     const blocks = [{ content: '' }];
 
-    expect(isPageOrphaned(page, references, blocks)).toBe(true);
+    expect(isPageEmpty(page, blocks)).toBe(true);
   });
 
-  it('should return true for page with no references and whitespace-only block', () => {
+  it('should return true for page with whitespace-only block', () => {
     const page = { name: 'test-page', 'journal?': false };
-    const references = [];
     const blocks = [{ content: '   ' }];
 
-    expect(isPageOrphaned(page, references, blocks)).toBe(true);
+    expect(isPageEmpty(page, blocks)).toBe(true);
   });
 
-  it('should return false for page with content but no references', () => {
+  it('should return true for page with dash-only block', () => {
     const page = { name: 'test-page', 'journal?': false };
-    const references = [];
+    const blocks = [{ content: '-' }];
+
+    expect(isPageEmpty(page, blocks)).toBe(true);
+  });
+
+  it('should return true for page with asterisk-only block', () => {
+    const page = { name: 'test-page', 'journal?': false };
+    const blocks = [{ content: '*' }];
+
+    expect(isPageEmpty(page, blocks)).toBe(true);
+  });
+
+  it('should return false for page with actual content', () => {
+    const page = { name: 'test-page', 'journal?': false };
     const blocks = [{ content: 'Some content' }];
 
-    expect(isPageOrphaned(page, references, blocks)).toBe(false);
-  });
-
-  it('should return false for page with references but no content', () => {
-    const page = { name: 'test-page', 'journal?': false };
-    const references = [['some-page', []]];
-    const blocks = [];
-
-    expect(isPageOrphaned(page, references, blocks)).toBe(false);
-  });
-
-  it('should return false for page with both references and content', () => {
-    const page = { name: 'test-page', 'journal?': false };
-    const references = [['some-page', []]];
-    const blocks = [{ content: 'Some content' }];
-
-    expect(isPageOrphaned(page, references, blocks)).toBe(false);
+    expect(isPageEmpty(page, blocks)).toBe(false);
   });
 
   it('should return false for journal pages', () => {
     const page = { name: '2025-11-03', 'journal?': true };
-    const references = [];
     const blocks = [];
 
-    expect(isPageOrphaned(page, references, blocks)).toBe(false);
+    expect(isPageEmpty(page, blocks)).toBe(false);
   });
 
   it('should return false for logseq system pages', () => {
     const page = { name: 'logseq/config', 'journal?': false };
-    const references = [];
     const blocks = [];
 
-    expect(isPageOrphaned(page, references, blocks)).toBe(false);
+    expect(isPageEmpty(page, blocks)).toBe(false);
   });
 
   it('should return false for pages with multiple blocks', () => {
     const page = { name: 'test-page', 'journal?': false };
-    const references = [];
     const blocks = [
       { content: 'First block' },
       { content: 'Second block' }
     ];
 
-    expect(isPageOrphaned(page, references, blocks)).toBe(false);
-  });
-
-  it('should handle null references', () => {
-    const page = { name: 'test-page', 'journal?': false };
-    const references = null;
-    const blocks = [];
-
-    expect(isPageOrphaned(page, references, blocks)).toBe(true);
-  });
-
-  it('should handle undefined references', () => {
-    const page = { name: 'test-page', 'journal?': false };
-    const references = undefined;
-    const blocks = [];
-
-    expect(isPageOrphaned(page, references, blocks)).toBe(true);
+    expect(isPageEmpty(page, blocks)).toBe(false);
   });
 
   it('should handle null blocks', () => {
     const page = { name: 'test-page', 'journal?': false };
-    const references = [];
     const blocks = null;
 
-    expect(isPageOrphaned(page, references, blocks)).toBe(true);
+    expect(isPageEmpty(page, blocks)).toBe(true);
   });
 
   it('should handle undefined blocks', () => {
     const page = { name: 'test-page', 'journal?': false };
-    const references = [];
     const blocks = undefined;
 
-    expect(isPageOrphaned(page, references, blocks)).toBe(true);
+    expect(isPageEmpty(page, blocks)).toBe(true);
   });
 });
 
 describe('findOrphanedPages', () => {
-  it('should find orphaned pages', async () => {
+  it('should find empty pages', async () => {
     const mockApi = {
       Editor: {
         getAllPages: vi.fn().mockResolvedValue([
-          { name: 'orphan-1', 'journal?': false },
-          { name: 'orphan-2', 'journal?': false },
-          { name: 'page-with-content', 'journal?': false },
-          { name: 'page-with-refs', 'journal?': false }
+          { name: 'empty-page-1', 'journal?': false },
+          { name: 'empty-page-2', 'journal?': false },
+          { name: 'page-with-content', 'journal?': false }
         ]),
-        getPageLinkedReferences: vi.fn((pageName) => {
-          if (pageName === 'page-with-refs') {
-            return Promise.resolve([['some-page', []]]);
-          }
-          return Promise.resolve([]);
-        }),
         getPageBlocksTree: vi.fn((pageName) => {
           if (pageName === 'page-with-content') {
             return Promise.resolve([{ content: 'Some content' }]);
@@ -137,7 +103,7 @@ describe('findOrphanedPages', () => {
 
     const orphans = await findOrphanedPages(mockApi);
 
-    expect(orphans).toEqual(['orphan-1', 'orphan-2']);
+    expect(orphans).toEqual(['empty-page-1', 'empty-page-2']);
     expect(mockApi.Editor.getAllPages).toHaveBeenCalledOnce();
   });
 
@@ -146,18 +112,17 @@ describe('findOrphanedPages', () => {
       Editor: {
         getAllPages: vi.fn().mockResolvedValue([
           { name: '2025-11-03', 'journal?': true },
-          { name: 'orphan-page', 'journal?': false }
+          { name: 'empty-page', 'journal?': false }
         ]),
-        getPageLinkedReferences: vi.fn().mockResolvedValue([]),
         getPageBlocksTree: vi.fn().mockResolvedValue([])
       }
     };
 
     const orphans = await findOrphanedPages(mockApi);
 
-    expect(orphans).toEqual(['orphan-page']);
-    expect(mockApi.Editor.getPageLinkedReferences).toHaveBeenCalledTimes(1);
-    expect(mockApi.Editor.getPageLinkedReferences).toHaveBeenCalledWith('orphan-page');
+    expect(orphans).toEqual(['empty-page']);
+    expect(mockApi.Editor.getPageBlocksTree).toHaveBeenCalledTimes(1);
+    expect(mockApi.Editor.getPageBlocksTree).toHaveBeenCalledWith('empty-page');
   });
 
   it('should skip logseq system pages', async () => {
@@ -166,26 +131,24 @@ describe('findOrphanedPages', () => {
         getAllPages: vi.fn().mockResolvedValue([
           { name: 'logseq/config', 'journal?': false },
           { name: 'logseq/pages', 'journal?': false },
-          { name: 'orphan-page', 'journal?': false }
+          { name: 'empty-page', 'journal?': false }
         ]),
-        getPageLinkedReferences: vi.fn().mockResolvedValue([]),
         getPageBlocksTree: vi.fn().mockResolvedValue([])
       }
     };
 
     const orphans = await findOrphanedPages(mockApi);
 
-    expect(orphans).toEqual(['orphan-page']);
-    expect(mockApi.Editor.getPageLinkedReferences).toHaveBeenCalledTimes(1);
+    expect(orphans).toEqual(['empty-page']);
+    expect(mockApi.Editor.getPageBlocksTree).toHaveBeenCalledTimes(1);
   });
 
-  it('should return empty array when no orphans found', async () => {
+  it('should return empty array when no empty pages found', async () => {
     const mockApi = {
       Editor: {
         getAllPages: vi.fn().mockResolvedValue([
           { name: 'page-with-content', 'journal?': false }
         ]),
-        getPageLinkedReferences: vi.fn().mockResolvedValue([]),
         getPageBlocksTree: vi.fn().mockResolvedValue([{ content: 'Content' }])
       }
     };
@@ -202,7 +165,6 @@ describe('findOrphanedPages', () => {
           { name: '2025-11-01', 'journal?': true },
           { name: '2025-11-02', 'journal?': true }
         ]),
-        getPageLinkedReferences: vi.fn(),
         getPageBlocksTree: vi.fn()
       }
     };
@@ -210,7 +172,36 @@ describe('findOrphanedPages', () => {
     const orphans = await findOrphanedPages(mockApi);
 
     expect(orphans).toEqual([]);
-    expect(mockApi.Editor.getPageLinkedReferences).not.toHaveBeenCalled();
     expect(mockApi.Editor.getPageBlocksTree).not.toHaveBeenCalled();
+  });
+
+  it('should identify pages with dash-only content as empty', async () => {
+    const mockApi = {
+      Editor: {
+        getAllPages: vi.fn().mockResolvedValue([
+          { name: 'page-with-dash', 'journal?': false }
+        ]),
+        getPageBlocksTree: vi.fn().mockResolvedValue([{ content: '-' }])
+      }
+    };
+
+    const orphans = await findOrphanedPages(mockApi);
+
+    expect(orphans).toEqual(['page-with-dash']);
+  });
+
+  it('should identify pages with asterisk-only content as empty', async () => {
+    const mockApi = {
+      Editor: {
+        getAllPages: vi.fn().mockResolvedValue([
+          { name: 'page-with-asterisk', 'journal?': false }
+        ]),
+        getPageBlocksTree: vi.fn().mockResolvedValue([{ content: '*' }])
+      }
+    };
+
+    const orphans = await findOrphanedPages(mockApi);
+
+    expect(orphans).toEqual(['page-with-asterisk']);
   });
 });
