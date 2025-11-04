@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { isPageEmpty, findOrphanedPages } from './index.js';
+import { isPageEmpty, hasNoLinkedReferences, findOrphanedPages } from './index.js';
 
 describe('isPageEmpty', () => {
   it('should return true for page with no blocks', () => {
@@ -83,8 +83,26 @@ describe('isPageEmpty', () => {
   });
 });
 
+describe('hasNoLinkedReferences', () => {
+  it('should return true when references is null', () => {
+    expect(hasNoLinkedReferences(null)).toBe(true);
+  });
+
+  it('should return true when references is undefined', () => {
+    expect(hasNoLinkedReferences(undefined)).toBe(true);
+  });
+
+  it('should return true when references is empty array', () => {
+    expect(hasNoLinkedReferences([])).toBe(true);
+  });
+
+  it('should return false when references has items', () => {
+    expect(hasNoLinkedReferences([['some-page', []]])).toBe(false);
+  });
+});
+
 describe('findOrphanedPages', () => {
-  it('should find empty pages', async () => {
+  it('should find empty pages with no linked references', async () => {
     const mockApi = {
       Editor: {
         getAllPages: vi.fn().mockResolvedValue([
@@ -97,7 +115,8 @@ describe('findOrphanedPages', () => {
             return Promise.resolve([{ content: 'Some content' }]);
           }
           return Promise.resolve([]);
-        })
+        }),
+        getPageLinkedReferences: vi.fn().mockResolvedValue([])
       }
     };
 
@@ -107,6 +126,28 @@ describe('findOrphanedPages', () => {
     expect(mockApi.Editor.getAllPages).toHaveBeenCalledOnce();
   });
 
+  it('should not include empty pages that have linked references', async () => {
+    const mockApi = {
+      Editor: {
+        getAllPages: vi.fn().mockResolvedValue([
+          { name: 'empty-with-refs', 'journal?': false },
+          { name: 'empty-no-refs', 'journal?': false }
+        ]),
+        getPageBlocksTree: vi.fn().mockResolvedValue([]),
+        getPageLinkedReferences: vi.fn((pageName) => {
+          if (pageName === 'empty-with-refs') {
+            return Promise.resolve([['referencing-page', []]]);
+          }
+          return Promise.resolve([]);
+        })
+      }
+    };
+
+    const orphans = await findOrphanedPages(mockApi);
+
+    expect(orphans).toEqual(['empty-no-refs']);
+  });
+
   it('should skip journal pages', async () => {
     const mockApi = {
       Editor: {
@@ -114,7 +155,8 @@ describe('findOrphanedPages', () => {
           { name: '2025-11-03', 'journal?': true },
           { name: 'empty-page', 'journal?': false }
         ]),
-        getPageBlocksTree: vi.fn().mockResolvedValue([])
+        getPageBlocksTree: vi.fn().mockResolvedValue([]),
+        getPageLinkedReferences: vi.fn().mockResolvedValue([])
       }
     };
 
@@ -133,7 +175,8 @@ describe('findOrphanedPages', () => {
           { name: 'logseq/pages', 'journal?': false },
           { name: 'empty-page', 'journal?': false }
         ]),
-        getPageBlocksTree: vi.fn().mockResolvedValue([])
+        getPageBlocksTree: vi.fn().mockResolvedValue([]),
+        getPageLinkedReferences: vi.fn().mockResolvedValue([])
       }
     };
 
@@ -149,7 +192,8 @@ describe('findOrphanedPages', () => {
         getAllPages: vi.fn().mockResolvedValue([
           { name: 'page-with-content', 'journal?': false }
         ]),
-        getPageBlocksTree: vi.fn().mockResolvedValue([{ content: 'Content' }])
+        getPageBlocksTree: vi.fn().mockResolvedValue([{ content: 'Content' }]),
+        getPageLinkedReferences: vi.fn().mockResolvedValue([])
       }
     };
 
@@ -165,7 +209,8 @@ describe('findOrphanedPages', () => {
           { name: '2025-11-01', 'journal?': true },
           { name: '2025-11-02', 'journal?': true }
         ]),
-        getPageBlocksTree: vi.fn()
+        getPageBlocksTree: vi.fn(),
+        getPageLinkedReferences: vi.fn()
       }
     };
 
@@ -173,15 +218,17 @@ describe('findOrphanedPages', () => {
 
     expect(orphans).toEqual([]);
     expect(mockApi.Editor.getPageBlocksTree).not.toHaveBeenCalled();
+    expect(mockApi.Editor.getPageLinkedReferences).not.toHaveBeenCalled();
   });
 
-  it('should identify pages with dash-only content as empty', async () => {
+  it('should identify pages with dash-only content as empty if no refs', async () => {
     const mockApi = {
       Editor: {
         getAllPages: vi.fn().mockResolvedValue([
           { name: 'page-with-dash', 'journal?': false }
         ]),
-        getPageBlocksTree: vi.fn().mockResolvedValue([{ content: '-' }])
+        getPageBlocksTree: vi.fn().mockResolvedValue([{ content: '-' }]),
+        getPageLinkedReferences: vi.fn().mockResolvedValue([])
       }
     };
 
@@ -190,18 +237,41 @@ describe('findOrphanedPages', () => {
     expect(orphans).toEqual(['page-with-dash']);
   });
 
-  it('should identify pages with asterisk-only content as empty', async () => {
+  it('should identify pages with asterisk-only content as empty if no refs', async () => {
     const mockApi = {
       Editor: {
         getAllPages: vi.fn().mockResolvedValue([
           { name: 'page-with-asterisk', 'journal?': false }
         ]),
-        getPageBlocksTree: vi.fn().mockResolvedValue([{ content: '*' }])
+        getPageBlocksTree: vi.fn().mockResolvedValue([{ content: '*' }]),
+        getPageLinkedReferences: vi.fn().mockResolvedValue([])
       }
     };
 
     const orphans = await findOrphanedPages(mockApi);
 
     expect(orphans).toEqual(['page-with-asterisk']);
+  });
+
+  it('should handle API errors gracefully', async () => {
+    const mockApi = {
+      Editor: {
+        getAllPages: vi.fn().mockResolvedValue([
+          { name: 'error-page', 'journal?': false },
+          { name: 'good-page', 'journal?': false }
+        ]),
+        getPageBlocksTree: vi.fn((pageName) => {
+          if (pageName === 'error-page') {
+            return Promise.reject(new Error('API error'));
+          }
+          return Promise.resolve([]);
+        }),
+        getPageLinkedReferences: vi.fn().mockResolvedValue([])
+      }
+    };
+
+    const orphans = await findOrphanedPages(mockApi);
+
+    expect(orphans).toEqual(['good-page']);
   });
 });

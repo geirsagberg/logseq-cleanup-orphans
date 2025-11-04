@@ -12,9 +12,11 @@ Automatically remove orphaned pages from Logseq with a keyboard shortcut and too
 
 ## What are Orphaned Pages?
 
-This plugin identifies "orphaned" pages using the same logic as Logseq's built-in feature. A page is considered orphaned if it:
-- Has no content (completely empty)
-- Has only a single block that is empty, whitespace, "-", or "*"
+This plugin identifies "orphaned" pages using the same logic as Logseq's built-in feature. A page is considered orphaned if it meets ALL of these criteria:
+- Has no linked references (no other pages or blocks link to it)
+- Has no meaningful content:
+  - Completely empty (no blocks)
+  - Or has only a single block that is empty, whitespace, "-", or "*"
 - Is not a journal page
 - Is not a system page (logseq/*)
 
@@ -51,11 +53,14 @@ Click the trash icon in the Logseq toolbar to trigger the cleanup process.
 ## How It Works
 
 1. The plugin scans all pages in your graph
-2. For each page, it checks if the page is empty:
-   - Has no blocks at all
-   - Or has a single block with no meaningful content (empty, "-", "*", or whitespace)
-3. Empty pages are marked as orphaned (skipping journal and system pages)
-4. You'll see a confirmation dialog showing how many orphaned pages were found
+2. For each page (excluding journal and system pages), it checks:
+   - **Is the page empty?**
+     - Has no blocks at all
+     - Or has a single block with no meaningful content (empty, "-", "*", or whitespace)
+   - **Does the page have any linked references?**
+     - Checks if any other pages or blocks link to this page
+3. Only pages that are both empty AND have no linked references are marked as orphaned
+4. You'll see a confirmation dialog listing the first 10 orphaned pages
 5. Upon confirmation, all orphaned pages are deleted
 
 ## Development

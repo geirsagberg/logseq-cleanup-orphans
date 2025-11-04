@@ -17,6 +17,10 @@ function isPageEmpty(page, blocks) {
   return false;
 }
 
+function hasNoLinkedReferences(references) {
+  return !references || references.length === 0;
+}
+
 async function findOrphanedPages(api) {
   const allPages = await api.Editor.getAllPages();
   const orphanedPages = [];
@@ -26,10 +30,20 @@ async function findOrphanedPages(api) {
       continue;
     }
 
-    const blocks = await api.Editor.getPageBlocksTree(page.name);
+    try {
+      const blocks = await api.Editor.getPageBlocksTree(page.originalName || page.name);
 
-    if (isPageEmpty(page, blocks)) {
-      orphanedPages.push(page.name);
+      if (!isPageEmpty(page, blocks)) {
+        continue;
+      }
+
+      const references = await api.Editor.getPageLinkedReferences(page.originalName || page.name);
+
+      if (hasNoLinkedReferences(references)) {
+        orphanedPages.push(page.name);
+      }
+    } catch (error) {
+      console.warn(`Error checking page "${page.name}":`, error);
     }
   }
 
@@ -106,5 +120,5 @@ if (typeof logseq !== 'undefined') {
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { isPageEmpty, findOrphanedPages };
+  module.exports = { isPageEmpty, hasNoLinkedReferences, findOrphanedPages };
 }
