@@ -2,25 +2,16 @@
   <!-- Background circle -->
   <circle cx="64" cy="64" r="60" fill="#3B82F6" opacity="0.1"/>
 
-  <!-- Broom handle -->
-  <rect x="75" y="20" width="6" height="50" rx="3" fill="#8B4513" transform="rotate(30 78 45)"/>
-
-  <!-- Broom bristles -->
-  <path d="M 60 70 L 55 85 L 60 85 L 58 95 L 63 95 L 65 85 L 70 85 L 68 70 Z" fill="#F59E0B"/>
-  <path d="M 62 72 L 60 82 L 66 82 L 64 72 Z" fill="#FCD34D"/>
-
-  <!-- Document/page being swept -->
-  <rect x="35" y="50" width="20" height="26" rx="2" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
-  <line x1="39" y1="56" x2="51" y2="56" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
-  <line x1="39" y1="62" x2="48" y2="62" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
-  <line x1="39" y1="68" x2="51" y2="68" stroke="#94A3B8" stroke-width="2" stroke-linecap="round"/>
-
-  <!-- Sparkles indicating cleaning -->
-  <circle cx="50" cy="40" r="3" fill="#FCD34D"/>
-  <circle cx="85" cy="65" r="2.5" fill="#FCD34D"/>
-  <circle cx="40" cy="85" r="2" fill="#FCD34D"/>
-
-  <!-- X mark on document (orphaned) -->
-  <line x1="38" y1="58" x2="52" y2="72" stroke="#EF4444" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
-  <line x1="52" y1="58" x2="38" y2="72" stroke="#EF4444" stroke-width="3" stroke-linecap="round" opacity="0.7"/>
+  <!-- Main icon scaled and centered -->
+  <g transform="translate(64, 64) scale(2.5) translate(-12, -12)">
+    <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+    <path d="M14 3v4a1 1 0 0 0 1 1h4" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M5 7v-2a2 2 0 0 1 2 -2h7l5 5v2" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M19 19a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2" stroke="#3B82F6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M5 16h.01" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M5 13h.01" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M5 10h.01" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M19 13h.01" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M19 16h.01" stroke="#EF4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
 </svg>
