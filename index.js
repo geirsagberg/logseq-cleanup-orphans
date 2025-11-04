@@ -47,8 +47,11 @@ async function removeOrphanedPages() {
       return;
     }
 
+    const pageList = orphanedPages.slice(0, 10).map(name => `  • ${name}`).join('\n');
+    const morePages = orphanedPages.length > 10 ? `\n  ... and ${orphanedPages.length - 10} more` : '';
+
     const confirmed = window.confirm(
-      `Found ${orphanedPages.length} orphaned page${orphanedPages.length > 1 ? 's' : ''}. Delete ${orphanedPages.length > 1 ? 'them' : 'it'}?`
+      `Found ${orphanedPages.length} orphaned page${orphanedPages.length > 1 ? 's' : ''}:\n\n${pageList}${morePages}\n\nDelete ${orphanedPages.length > 1 ? 'them' : 'it'}?`
     );
 
     if (confirmed) {
