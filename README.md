@@ -10,6 +10,20 @@ Automatically remove orphaned pages from Logseq with a keyboard shortcut and too
 - **Safe Deletion**: Shows confirmation dialog with count before deleting
 - **Excludes Special Pages**: Automatically skips system pages (logseq/*) and special pages (contents, favorites, card)
 
+## Screenshots
+
+<div align="center">
+
+**Confirmation Dialog**
+
+<img src="screenshot-01.png" alt="Confirmation dialog showing 3 orphaned journal pages" width="300">
+
+**Success Message**
+
+<img src="screenshot-02.png" alt="Success toast after deleting orphaned pages" width="500">
+
+</div>
+
 ## What are Orphaned Pages?
 
 This plugin identifies "orphaned" pages using the same logic as Logseq's built-in feature. A page is considered orphaned if it meets ALL of these criteria:
